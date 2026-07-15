@@ -5,27 +5,45 @@ security:
 
     # https://symfony.com/doc/current/security.html#loading-the-user-the-user-provider
     providers:
-        users_in_memory: { memory: null }
+        # used to reload user from session & other features (e.g. switch_user)
+        app_user_provider:
+            entity:
+                class: App\Entity\User
+                property: email
 
     firewalls:
         dev:
             # Ensure dev tools and static assets are always allowed
             pattern: ^/(_profiler|_wdt|assets|build)/
             security: false
-        main:
-            lazy: true
-            provider: users_in_memory
 
-            # Activate different ways to authenticate:
-            # https://symfony.com/doc/current/security.html#the-firewall
+        login:
+            pattern: ^/api/auth/login
+            stateless: true
+            json_login:
+                check_path: /api/auth/login
+                username_path: email     # Correspond au payload de ton front
+                password_path: password  # Correspond au payload de ton front
+                success_handler: lexik_jwt_authentication.handler.authentication_success
+                failure_handler: lexik_jwt_authentication.handler.authentication_failure
 
-            # https://symfony.com/doc/current/security/impersonating_user.html
-            # switch_user: true
+        # 3. La protection du reste de l'API (Bien aligné avec "login" et "dev")
+        api:
+            pattern: ^/api
+            stateless: true
+            jwt: ~
 
     # Note: Only the *first* matching rule is applied
     access_control:
-        # - { path: ^/admin, roles: ROLE_ADMIN }
-        # - { path: ^/profile, roles: ROLE_USER }
+        # On autorise tout le monde à voir le catalogue et à se connecter/s'inscrire
+        - { path: ^/api/auth/login, roles: PUBLIC_ACCESS }
+        - { path: ^/api/auth/register, roles: PUBLIC_ACCESS }
+        - { path: ^/api/categories, roles: PUBLIC_ACCESS, methods: [ 'GET' ] }
+        - { path: ^/api/products, roles: PUBLIC_ACCESS, methods: [ 'GET' ] }
+
+        # On bloque les routes de modification du catalogue (réservé aux admins)
+        - { path: ^/api/categories, roles: ROLE_ADMIN, methods: [ 'POST', 'PUT', 'DELETE' ] }
+        - { path: ^/api/products, roles: ROLE_ADMIN, methods: [ 'POST', 'PUT', 'DELETE' ] }
 
 when@test:
     security:
