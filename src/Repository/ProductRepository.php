@@ -1,0 +1,84 @@
+<?php
+
+namespace App\Repository;
+
+use App\Entity\Product;
+use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\Persistence\ManagerRegistry;
+use Doctrine\ORM\Tools\Pagination\Paginator;
+
+/**
+ * @extends ServiceEntityRepository<Product>
+ */
+class ProductRepository extends ServiceEntityRepository
+{
+    public function __construct(ManagerRegistry $registry)
+    {
+        parent::__construct($registry, Product::class);
+    }
+
+    //    /**
+    //     * @return Product[] Returns an array of Product objects
+    //     */
+    //    public function findByExampleField($value): array
+    //    {
+    //        return $this->createQueryBuilder('p')
+    //            ->andWhere('p.exampleField = :val')
+    //            ->setParameter('val', $value)
+    //            ->orderBy('p.id', 'ASC')
+    //            ->setMaxResults(10)
+    //            ->getQuery()
+    //            ->getResult()
+    //        ;
+    //    }
+
+    //    public function findOneBySomeField($value): ?Product
+    //    {
+    //        return $this->createQueryBuilder('p')
+    //            ->andWhere('p.exampleField = :val')
+    //            ->setParameter('val', $value)
+    //            ->getQuery()
+    //            ->getOneOrNullResult()
+    //        ;
+    //    }
+    /**
+     * Récupère les produits formatés pour le Front-end (PageResponse)
+     */
+    public function getPaginatedProducts(int $page, int $size, ?int $categoryId = null, ?string $search = null): array
+    {
+        // 1. On prépare la requête SQL
+        $qb = $this->createQueryBuilder('p')
+            ->where('p.isActive = :active')
+            ->setParameter('active', true)
+            ->orderBy('p.displayPriority', 'ASC'); // Le fameux tri par priorité !
+
+        // 2. Filtre par catégorie si demandé
+        if ($categoryId) {
+            $qb->andWhere('p.category = :categoryId')
+                ->setParameter('categoryId', $categoryId);
+        }
+
+        // 3. Filtre par recherche texte (q)
+        if ($search) {
+            $qb->andWhere('p.name LIKE :search OR p.shortDescription LIKE :search')
+                ->setParameter('search', '%' . $search . '%');
+        }
+
+        // 4. On configure la pagination
+        $query = $qb->getQuery()
+            ->setFirstResult($page * $size) // Offset (à partir de quel résultat on commence)
+            ->setMaxResults($size);         // Limite par page
+
+        $paginator = new Paginator($query);
+        $totalElements = count($paginator);
+
+        // 5. On renvoie EXACTEMENT le format attendu par le Front-end
+        return [
+            'content' => iterator_to_array($paginator),
+            'totalElements' => $totalElements,
+            'totalPages' => ceil($totalElements / $size),
+            'number' => $page,
+            'size' => $size,
+        ];
+    }
+}
