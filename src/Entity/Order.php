@@ -7,6 +7,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: OrderRepository::class)]
 #[ORM\Table(name: '`order`')]
@@ -15,18 +16,23 @@ class Order
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['order:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 50)]
+    #[Groups(['order:read'])]
     private ?string $status = null;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2)]
+    #[Groups(['order:read'])]
     private ?string $totalAmount = null;
 
     #[ORM\Column(length: 3)]
+    #[Groups(['order:read'])]
     private ?string $currency = null;
 
     #[ORM\Column]
+    #[Groups(['order:read'])]
     private ?\DateTimeImmutable $createdAt = null;
 
     #[ORM\ManyToOne(inversedBy: 'orders')]
@@ -37,9 +43,11 @@ class Order
      * @var Collection<int, OrderItem>
      */
     #[ORM\OneToMany(targetEntity: OrderItem::class, mappedBy: 'customerOrder')]
+    #[Groups(['order:read'])]
     private Collection $orderItems;
 
     #[ORM\OneToOne(mappedBy: 'customerOrder', cascade: ['persist', 'remove'])]
+    #[Groups(['order:read'])]
     private ?Invoice $invoice = null;
 
     public function __construct()

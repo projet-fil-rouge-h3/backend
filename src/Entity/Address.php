@@ -2,39 +2,48 @@
 
 namespace App\Entity;
 
-use App\Repository\AdressRepository;
+use App\Repository\AddressRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 
-#[ORM\Entity(repositoryClass: AdressRepository::class)]
+#[ORM\Entity(repositoryClass: AddressRepository::class)]
 class Address
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['address:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 100)]
+    #[Groups(['address:read'])]
     private ?string $label = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['address:read'])]
     private ?string $street = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['address:read'])]
     private ?string $street2 = null;
 
     #[ORM\Column(length: 100)]
+    #[Groups(['address:read'])]
     private ?string $city = null;
 
     #[ORM\Column(length: 20)]
+    #[Groups(['address:read'])]
     private ?string $postalCode = null;
 
     #[ORM\Column(length: 100)]
+    #[Groups(['address:read'])]
     private ?string $country = null;
 
     #[ORM\Column]
+    #[Groups(['address:read'])]
     private ?bool $isDefault = null;
 
-    #[ORM\ManyToOne(inversedBy: 'adresses')]
+    #[ORM\ManyToOne(inversedBy: 'addresses')]
     #[ORM\JoinColumn(nullable: false)]
     private ?User $user = null;
 
