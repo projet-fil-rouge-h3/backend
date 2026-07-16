@@ -19,7 +19,7 @@ class OrderController extends AbstractController
     #[Route('', name: 'api_orders_create', methods: ['POST'])]
     public function createOrder(Request $request, EntityManagerInterface $em, ProductRepository $productRepo): JsonResponse
     {
-        // 1. Vérifier que l'utilisateur est bien connecté via son Token JWT
+        // Vérifier que l'utilisateur est bien connecté via son Token JWT
         $user = $this->getUser();
         if (!$user) {
             return $this->json(['message' => 'Vous devez être connecté pour commander.'], 401);
@@ -32,7 +32,6 @@ class OrderController extends AbstractController
             return $this->json(['message' => 'Le panier est vide.'], 400);
         }
 
-        // 2. Initialiser la Commande
         $order = new Order();
         $order->setUser($user);
         $order->setStatus('VALIDATED'); // Ou 'PENDING' si tu as un module de paiement type Stripe plus tard
@@ -40,7 +39,6 @@ class OrderController extends AbstractController
         $order->setCreatedAt(new \DateTimeImmutable());
         $totalAmount = 0.0;
 
-        // 3. Traiter chaque ligne du panier
         foreach ($itemsData as $itemData) {
             $product = $productRepo->find($itemData['productId']);
 
@@ -54,7 +52,6 @@ class OrderController extends AbstractController
             $orderItem->setQuantity($itemData['quantity'] ?? 1);
             $orderItem->setBillingPeriod($itemData['billingPeriod'] ?? 'monthly');
 
-            // On récupère le VRAI prix en base selon la période choisie
             $unitPrice = ($orderItem->getBillingPeriod() === 'yearly')
                 ? $product->getPriceYearly()
                 : $product->getPriceMonthly();
@@ -65,7 +62,6 @@ class OrderController extends AbstractController
 
             $em->persist($orderItem);
 
-            // On ajoute au total de la commande
             $totalAmount += ($unitPrice * $orderItem->getQuantity());
         }
 
@@ -81,7 +77,7 @@ class OrderController extends AbstractController
         $invoice->setIssuedAt(new \DateTimeImmutable());
         $invoice->setCustomerOrder($order);
 
-        // Calcul de la TVA (On part sur une base de 20% pour du logiciel)
+        // Calcul de la TVA à 20% à modifier
         $vatRate = 20.0;
         $amountHt = $totalAmount / (1 + ($vatRate / 100));
         $vatAmount = $totalAmount - $amountHt;
@@ -94,7 +90,6 @@ class OrderController extends AbstractController
 
         $em->persist($invoice);
 
-        // 5. Sauvegarder le tout en base de données de manière transactionnelle
         $em->flush();
 
         return $this->json($order, 201, [], ['groups' => 'order:read']);
@@ -116,7 +111,6 @@ class OrderController extends AbstractController
             ['createdAt' => 'DESC']
         );
 
-        // 3. On renvoie le tout avec le même groupe de lecture
         return $this->json($orders, 200, [], ['groups' => 'order:read']);
     }
 }
