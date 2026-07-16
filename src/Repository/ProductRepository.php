@@ -46,25 +46,25 @@ class ProductRepository extends ServiceEntityRepository
      */
     public function getPaginatedProducts(int $page, int $size, ?int $categoryId = null, ?string $search = null): array
     {
-        // 1. On prépare la requête SQL
+        //  On prépare la requête SQL
         $qb = $this->createQueryBuilder('p')
             ->where('p.isActive = :active')
             ->setParameter('active', true)
             ->orderBy('p.displayPriority', 'ASC'); // Le fameux tri par priorité !
 
-        // 2. Filtre par catégorie si demandé
+        //  Filtre par catégorie si demandé
         if ($categoryId) {
             $qb->andWhere('p.category = :categoryId')
                 ->setParameter('categoryId', $categoryId);
         }
 
-        // 3. Filtre par recherche texte (q)
+        //  Filtre par recherche texte (q)
         if ($search) {
             $qb->andWhere('p.name LIKE :search OR p.shortDescription LIKE :search')
                 ->setParameter('search', '%' . $search . '%');
         }
 
-        // 4. On configure la pagination
+        // pagination
         $query = $qb->getQuery()
             ->setFirstResult($page * $size) // Offset (à partir de quel résultat on commence)
             ->setMaxResults($size);         // Limite par page
@@ -72,7 +72,6 @@ class ProductRepository extends ServiceEntityRepository
         $paginator = new Paginator($query);
         $totalElements = count($paginator);
 
-        // 5. On renvoie EXACTEMENT le format attendu par le Front-end
         return [
             'content' => iterator_to_array($paginator),
             'totalElements' => $totalElements,
