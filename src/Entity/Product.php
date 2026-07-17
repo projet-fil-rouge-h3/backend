@@ -8,6 +8,7 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
+use Symfony\Component\Serializer\Attribute\SerializedName;
 #[ORM\Entity(repositoryClass: ProductRepository::class)]
 class Product
 {
@@ -33,12 +34,12 @@ class Product
     #[Groups(['product:read'])]
     private ?string $shortDescription = null;
 
+    // Prix exposés via les getters *AsNumber (le front attend des number,
+    // Doctrine DECIMAL est un string PHP) — pas de groupe sur les propriétés
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2)]
-    #[Groups(['product:read'])]
     private ?string $priceMonthly = null;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2)]
-    #[Groups(['product:read'])]
     private ?string $priceYearly = null;
 
     #[ORM\Column(length: 255, nullable: true)]
@@ -50,12 +51,16 @@ class Product
     private ?array $features = null;
 
     #[ORM\Column]
+    #[Groups(['product:read'])]
     private ?int $displayPriority = null;
 
     #[ORM\Column]
+    #[Groups(['product:read'])]
+    #[SerializedName('active')]
     private ?bool $isActive = null;
 
     #[ORM\ManyToOne(inversedBy: 'products')]
+    #[Groups(['product:read'])]
     private ?Category $category = null;
 
     /**
@@ -137,6 +142,20 @@ class Product
     public function getPriceYearly(): ?string
     {
         return $this->priceYearly;
+    }
+
+    #[Groups(['product:read'])]
+    #[SerializedName('priceMonthly')]
+    public function getPriceMonthlyAsNumber(): ?float
+    {
+        return $this->priceMonthly !== null ? (float) $this->priceMonthly : null;
+    }
+
+    #[Groups(['product:read'])]
+    #[SerializedName('priceYearly')]
+    public function getPriceYearlyAsNumber(): ?float
+    {
+        return $this->priceYearly !== null ? (float) $this->priceYearly : null;
     }
 
     public function setPriceYearly(string $priceYearly): static

@@ -6,6 +6,7 @@ use App\Repository\InvoiceRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
+use Symfony\Component\Serializer\Attribute\SerializedName;
 
 #[ORM\Entity(repositoryClass: InvoiceRepository::class)]
 class Invoice
@@ -20,20 +21,17 @@ class Invoice
     #[Groups(['order:read'])]
     private ?string $invoiceNumber = null;
 
+    // Montants exposés en number via les getters *AsNumber (le front attend des number)
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2)]
-    #[Groups(['order:read'])]
     private ?string $amountHt = null;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 5, scale: 2)]
-    #[Groups(['order:read'])]
     private ?string $vatRate = null;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2)]
-    #[Groups(['order:read'])]
     private ?string $vatAmount = null;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2)]
-    #[Groups(['order:read'])]
     private ?string $amountTtc = null;
 
     #[ORM\Column(length: 3)]
@@ -110,6 +108,34 @@ class Invoice
         $this->amountTtc = $amountTtc;
 
         return $this;
+    }
+
+    #[Groups(['order:read'])]
+    #[SerializedName('amountHt')]
+    public function getAmountHtAsNumber(): ?float
+    {
+        return $this->amountHt !== null ? (float) $this->amountHt : null;
+    }
+
+    #[Groups(['order:read'])]
+    #[SerializedName('vatRate')]
+    public function getVatRateAsNumber(): ?float
+    {
+        return $this->vatRate !== null ? (float) $this->vatRate : null;
+    }
+
+    #[Groups(['order:read'])]
+    #[SerializedName('vatAmount')]
+    public function getVatAmountAsNumber(): ?float
+    {
+        return $this->vatAmount !== null ? (float) $this->vatAmount : null;
+    }
+
+    #[Groups(['order:read'])]
+    #[SerializedName('amountTtc')]
+    public function getAmountTtcAsNumber(): ?float
+    {
+        return $this->amountTtc !== null ? (float) $this->amountTtc : null;
     }
 
     public function getCurrency(): ?string

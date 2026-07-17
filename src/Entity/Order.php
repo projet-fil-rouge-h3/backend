@@ -8,6 +8,7 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
+use Symfony\Component\Serializer\Attribute\SerializedName;
 
 #[ORM\Entity(repositoryClass: OrderRepository::class)]
 #[ORM\Table(name: '`order`')]
@@ -23,8 +24,8 @@ class Order
     #[Groups(['order:read'])]
     private ?string $status = null;
 
+    // Exposé en number via getTotalAmountAsNumber (le front attend un number)
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2)]
-    #[Groups(['order:read'])]
     private ?string $totalAmount = null;
 
     #[ORM\Column(length: 3)]
@@ -35,8 +36,11 @@ class Order
     #[Groups(['order:read'])]
     private ?\DateTimeImmutable $createdAt = null;
 
+    // Exposé (champs limités par le groupe order:read côté User) pour la colonne
+    // Client du back-office ; pas de cycle : User::$orders n'a pas de groupe
     #[ORM\ManyToOne(inversedBy: 'orders')]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['order:read'])]
     private ?User $user = null;
 
     /**
@@ -44,6 +48,7 @@ class Order
      */
     #[ORM\OneToMany(targetEntity: OrderItem::class, mappedBy: 'customerOrder')]
     #[Groups(['order:read'])]
+    #[SerializedName('items')]
     private Collection $orderItems;
 
     #[ORM\OneToOne(mappedBy: 'customerOrder', cascade: ['persist', 'remove'])]
@@ -75,6 +80,13 @@ class Order
     public function getTotalAmount(): ?string
     {
         return $this->totalAmount;
+    }
+
+    #[Groups(['order:read'])]
+    #[SerializedName('totalAmount')]
+    public function getTotalAmountAsNumber(): ?float
+    {
+        return $this->totalAmount !== null ? (float) $this->totalAmount : null;
     }
 
     public function setTotalAmount(string $totalAmount): static

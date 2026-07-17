@@ -8,21 +8,22 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
+use Symfony\Component\Serializer\Attribute\SerializedName;
 #[ORM\Entity(repositoryClass: CategoryRepository::class)]
 class Category
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['category:read'])]
+    #[Groups(['category:read', 'product:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 100)]
-    #[Groups(['category:read'])]
+    #[Groups(['category:read', 'product:read'])]
     private ?string $name = null;
 
     #[ORM\Column(length: 100)]
-    #[Groups(['category:read'])]
+    #[Groups(['category:read', 'product:read'])]
     private ?string $slug = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
@@ -35,6 +36,7 @@ class Category
 
     #[ORM\Column]
     #[Groups(['category:read'])]
+    #[SerializedName('active')]
     private ?bool $isActive = null;
 
     /**

@@ -2,12 +2,14 @@
 
 namespace App\Controller;
 
+use App\Repository\CarouselSlideRepository;
 use App\Repository\CategoryRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\HttpFoundation\Request;
 use App\Repository\ProductRepository;
+use App\Entity\CarouselSlide;
 use App\Entity\Product;
 use App\Entity\Category;
 use Doctrine\ORM\EntityManagerInterface;
@@ -24,6 +26,15 @@ class CatalogController extends AbstractController
         // en utilisant uniquement les champs du groupe 'category:read'
         return $this->json($categories, 200, [], ['groups' => 'category:read']);
     }
+    // Liste admin : inclut les catégories désactivées (protégée ROLE_ADMIN dans security.yaml)
+    #[Route('/categories/admin', name: 'api_categories_admin', methods: ['GET'])]
+    public function getCategoriesAdmin(CategoryRepository $categoryRepository): JsonResponse
+    {
+        $categories = $categoryRepository->findBy([], ['name' => 'ASC']);
+
+        return $this->json($categories, 200, [], ['groups' => 'category:read']);
+    }
+
     #[Route('/categories', name: 'api_categories_create', methods: ['POST'])]
     public function createCategory(Request $request, EntityManagerInterface $em): JsonResponse
     {
@@ -82,6 +93,46 @@ class CatalogController extends AbstractController
         // On renvoie le JSON en utilisant le groupe de notre entité Product
         return $this->json($data, 200, [], ['groups' => 'product:read']);
     }
+    // ⚠️ Déclarée AVANT /products/{slug} : sinon "top" serait pris pour un slug
+    #[Route('/products/top', name: 'api_products_top', methods: ['GET'])]
+    public function getTopProducts(ProductRepository $productRepository): JsonResponse
+    {
+        // Les produits mis en avant : actifs, triés par priorité d'affichage
+        $products = $productRepository->findBy(
+            ['isActive' => true],
+            ['displayPriority' => 'ASC'],
+            4
+        );
+
+        return $this->json($products, 200, [], ['groups' => 'product:read']);
+    }
+
+    // ⚠️ Déclarée AVANT /products/{slug} + protégée ROLE_ADMIN dans security.yaml
+    #[Route('/products/admin', name: 'api_products_admin', methods: ['GET'])]
+    public function getProductsAdmin(Request $request, ProductRepository $productRepository): JsonResponse
+    {
+        $page = $request->query->getInt('page', 0);
+        $size = $request->query->getInt('size', 50);
+
+        // includeInactive: true → le back-office voit aussi les produits désactivés
+        $data = $productRepository->getPaginatedProducts($page, $size, null, null, true);
+
+        return $this->json($data, 200, [], ['groups' => 'product:read']);
+    }
+
+    #[Route('/products/{slug}', name: 'api_products_show', methods: ['GET'], requirements: ['slug' => '[a-z0-9\-]+'])]
+    public function getProductBySlug(string $slug, ProductRepository $productRepository): JsonResponse
+    {
+        // Fiche produit publique : uniquement si le produit est actif
+        $product = $productRepository->findOneBy(['slug' => $slug, 'isActive' => true]);
+
+        if (!$product) {
+            return $this->json(['message' => 'Produit introuvable'], 404);
+        }
+
+        return $this->json($product, 200, [], ['groups' => 'product:read']);
+    }
+
     #[Route('/products', name: 'api_products_create', methods: ['POST'])]
     public function createProduct(Request $request, EntityManagerInterface $em, CategoryRepository $categoryRepo): JsonResponse
     {
@@ -152,6 +203,72 @@ class CatalogController extends AbstractController
         $em->flush();
 
         // Le code HTTP 204 signifie "Action réussie, pas de contenu à renvoyer"
+        return $this->json(null, 204);
+    }
+
+    #[Route('/carousel', name: 'api_carousel', methods: ['GET'])]
+    public function getCarousel(CarouselSlideRepository $carouselRepository): JsonResponse
+    {
+        // Les slides actifs, dans l'ordre d'affichage défini en back-office
+        $slides = $carouselRepository->findBy(['isActive' => true], ['displayOrder' => 'ASC']);
+
+        return $this->json($slides, 200, [], ['groups' => 'carousel:read']);
+    }
+
+    // Liste admin : inclut les slides désactivés (protégée ROLE_ADMIN dans security.yaml)
+    #[Route('/carousel/admin', name: 'api_carousel_admin', methods: ['GET'])]
+    public function getCarouselAdmin(CarouselSlideRepository $carouselRepository): JsonResponse
+    {
+        $slides = $carouselRepository->findBy([], ['displayOrder' => 'ASC']);
+
+        return $this->json($slides, 200, [], ['groups' => 'carousel:read']);
+    }
+
+    #[Route('/carousel', name: 'api_carousel_create', methods: ['POST'])]
+    public function createCarouselSlide(Request $request, EntityManagerInterface $em): JsonResponse
+    {
+        $data = $request->toArray();
+
+        $slide = new CarouselSlide();
+        $slide->setTitle($data['title'] ?? '');
+        $slide->setSubtitle($data['subtitle'] ?? null);
+        $slide->setImageUrl($data['imageUrl'] ?? '');
+        $slide->setLinkUrl($data['linkUrl'] ?? null);
+        $slide->setDisplayOrder($data['displayOrder'] ?? 1);
+
+        // Par défaut, un nouveau slide est actif
+        $slide->setIsActive(true);
+
+        $em->persist($slide);
+        $em->flush();
+
+        return $this->json($slide, 201, [], ['groups' => 'carousel:read']);
+    }
+
+    #[Route('/carousel/{id}', name: 'api_carousel_update', methods: ['PUT'])]
+    public function updateCarouselSlide(CarouselSlide $slide, Request $request, EntityManagerInterface $em): JsonResponse
+    {
+        $data = $request->toArray();
+
+        if (isset($data['title'])) $slide->setTitle($data['title']);
+        if (isset($data['subtitle'])) $slide->setSubtitle($data['subtitle']);
+        if (isset($data['imageUrl'])) $slide->setImageUrl($data['imageUrl']);
+        if (isset($data['linkUrl'])) $slide->setLinkUrl($data['linkUrl']);
+        if (isset($data['displayOrder'])) $slide->setDisplayOrder($data['displayOrder']);
+        if (isset($data['active'])) $slide->setIsActive($data['active']);
+
+        $em->flush();
+
+        return $this->json($slide, 200, [], ['groups' => 'carousel:read']);
+    }
+
+    #[Route('/carousel/{id}', name: 'api_carousel_delete', methods: ['DELETE'])]
+    public function deleteCarouselSlide(CarouselSlide $slide, EntityManagerInterface $em): JsonResponse
+    {
+        // Soft delete : on désactive simplement le slide
+        $slide->setIsActive(false);
+        $em->flush();
+
         return $this->json(null, 204);
     }
 }

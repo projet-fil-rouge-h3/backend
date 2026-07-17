@@ -43,14 +43,19 @@ class ProductRepository extends ServiceEntityRepository
     //    }
     /**
      * Récupère les produits formatés pour le Front-end (PageResponse)
+     * $includeInactive = true pour le back-office (produits désactivés inclus)
      */
-    public function getPaginatedProducts(int $page, int $size, ?int $categoryId = null, ?string $search = null): array
+    public function getPaginatedProducts(int $page, int $size, ?int $categoryId = null, ?string $search = null, bool $includeInactive = false): array
     {
         //  On prépare la requête SQL
         $qb = $this->createQueryBuilder('p')
-            ->where('p.isActive = :active')
-            ->setParameter('active', true)
             ->orderBy('p.displayPriority', 'ASC'); // Le fameux tri par priorité !
+
+        //  Le catalogue public ne montre que les produits actifs
+        if (!$includeInactive) {
+            $qb->andWhere('p.isActive = :active')
+                ->setParameter('active', true);
+        }
 
         //  Filtre par catégorie si demandé
         if ($categoryId) {
@@ -75,7 +80,7 @@ class ProductRepository extends ServiceEntityRepository
         return [
             'content' => iterator_to_array($paginator),
             'totalElements' => $totalElements,
-            'totalPages' => ceil($totalElements / $size),
+            'totalPages' => (int) ceil($totalElements / $size), // ceil() renvoie un float → JSON "1.0" sans le cast
             'number' => $page,
             'size' => $size,
         ];

@@ -6,6 +6,7 @@ use App\Repository\OrderItemRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
+use Symfony\Component\Serializer\Attribute\SerializedName;
 
 #[ORM\Entity(repositoryClass: OrderItemRepository::class)]
 class OrderItem
@@ -24,8 +25,8 @@ class OrderItem
     #[Groups(['order:read'])]
     private ?int $quantity = null;
 
+    // Exposé en number via getUnitPriceAsNumber (le front attend un number)
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2)]
-    #[Groups(['order:read'])]
     private ?string $unitPrice = null;
 
     #[ORM\Column(length: 50)]
@@ -78,6 +79,13 @@ class OrderItem
         $this->unitPrice = $unitPrice;
 
         return $this;
+    }
+
+    #[Groups(['order:read'])]
+    #[SerializedName('unitPrice')]
+    public function getUnitPriceAsNumber(): ?float
+    {
+        return $this->unitPrice !== null ? (float) $this->unitPrice : null;
     }
 
     public function getBillingPeriod(): ?string

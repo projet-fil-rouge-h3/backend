@@ -2,6 +2,7 @@
 
 namespace App\DataFixtures;
 
+use App\Entity\CarouselSlide;
 use App\Entity\Category;
 use App\Entity\Product;
 use App\Entity\User;
@@ -91,7 +92,41 @@ class AppFixtures extends Fixture
             $manager->persist($product);
         }
 
-        // 4. SAUVEGARDE EN BASE DE DONNÉES
+        // 4. CRÉATION DES SLIDES DU CAROUSEL (page d'accueil)
+        $slidesData = [
+            [
+                'title' => 'Protégez votre entreprise 24/7',
+                'subtitle' => 'SOC managé par nos experts cybersécurité',
+                'imageUrl' => '/assets/carousel/soc.jpg',
+                'linkUrl' => '/catalog?cat=soc',
+            ],
+            [
+                'title' => 'Vos terminaux sous haute protection',
+                'subtitle' => 'EDR nouvelle génération avec détection par IA',
+                'imageUrl' => '/assets/carousel/edr.jpg',
+                'linkUrl' => '/catalog?cat=edr',
+            ],
+            [
+                'title' => 'Une visibilité totale sur vos menaces',
+                'subtitle' => 'XDR : corrélation cloud, réseau et endpoints',
+                'imageUrl' => '/assets/carousel/xdr.jpg',
+                'linkUrl' => '/catalog?cat=xdr',
+            ],
+        ];
+
+        $order = 1;
+        foreach ($slidesData as $data) {
+            $slide = new CarouselSlide();
+            $slide->setTitle($data['title']);
+            $slide->setSubtitle($data['subtitle']);
+            $slide->setImageUrl($data['imageUrl']);
+            $slide->setLinkUrl($data['linkUrl']);
+            $slide->setDisplayOrder($order++);
+            $slide->setIsActive(true);
+            $manager->persist($slide);
+        }
+
+        // 5. SAUVEGARDE EN BASE DE DONNÉES
         $manager->flush();
     }
 }

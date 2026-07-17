@@ -38,8 +38,18 @@ security:
         # On autorise tout le monde à voir le catalogue et à se connecter/s'inscrire
         - { path: ^/api/auth/login, roles: PUBLIC_ACCESS }
         - { path: ^/api/auth/register, roles: PUBLIC_ACCESS }
+        # ── Routes back-office (ROLE_ADMIN) ──
+        # ⚠️ À garder AVANT les règles publiques plus générales (première règle qui matche gagne)
+        - { path: ^/api/products/admin, roles: ROLE_ADMIN }
+        - { path: ^/api/categories/admin, roles: ROLE_ADMIN }
+        - { path: ^/api/carousel/admin, roles: ROLE_ADMIN }
+        - { path: ^/api/auth/users, roles: ROLE_ADMIN }
+        - { path: ^/api/orders/(all|stats), roles: ROLE_ADMIN }
+        - { path: ^/api/orders/\d+/status, roles: ROLE_ADMIN }
         - { path: ^/api/categories, roles: PUBLIC_ACCESS, methods: [ 'GET' ] }
         - { path: ^/api/products, roles: PUBLIC_ACCESS, methods: [ 'GET' ] }
+        - { path: ^/api/carousel, roles: PUBLIC_ACCESS, methods: [ 'GET' ] }
+        - { path: ^/api/carousel, roles: ROLE_ADMIN, methods: [ 'POST', 'PUT', 'DELETE' ] }
 
         # On bloque les routes de modification du catalogue (réservé aux admins)
         - { path: ^/api/categories, roles: ROLE_ADMIN, methods: [ 'POST', 'PUT', 'DELETE' ] }
