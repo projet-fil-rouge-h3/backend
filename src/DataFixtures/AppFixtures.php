@@ -22,18 +22,26 @@ class AppFixtures extends Fixture
         $faker = Factory::create('fr_FR');
 
         // 1. CRÉATION DES UTILISATEURS
-        $admin = new User();$admin->setEmail('admin@cyna-it.fr');
+        $admin = new User();
+        $admin->setEmail('admin@cyna-it.fr');
         $admin->setRoles(['ROLE_ADMIN']);
-        $admin->setPassword($this->hasher->hashPassword($admin, 'admin123'));$admin->setFirstName('Merlin');
-        $admin->setLastName('Admin');$admin->setIsVerified(true);
-        $admin->setIsActive(true);$admin->setCreatedAt(new \DateTimeImmutable());
+        $admin->setPassword($this->hasher->hashPassword($admin, 'admin123'));
+        $admin->setFirstName('Admin'); 
+        $admin->setLastName('System');
+        $admin->setIsVerified(true);
+        $admin->setIsActive(true);
+        $admin->setCreatedAt(new \DateTimeImmutable());
         $manager->persist($admin);
 
-        $client = new User();$client->setEmail('client@cyna-it.fr');
+        $client = new User();
+        $client->setEmail('client@cyna-it.fr');
         $client->setRoles(['ROLE_USER']);
-        $client->setPassword($this->hasher->hashPassword($client, 'client123'));$client->setFirstName('Hugo');
-        $client->setLastName('Client');$client->setIsVerified(true);
-        $client->setIsActive(true);$client->setCreatedAt(new \DateTimeImmutable());
+        $client->setPassword($this->hasher->hashPassword($client, 'client123'));
+        $client->setFirstName('Client'); 
+        $client->setLastName('Test');
+        $client->setIsVerified(true);
+        $client->setIsActive(true);
+        $client->setCreatedAt(new \DateTimeImmutable());
         $manager->persist($client);
 
         // 2. CRÉATION DES CATÉGORIES CYBERSÉCURITÉ
@@ -44,10 +52,14 @@ class AppFixtures extends Fixture
         ];
 
         $categories = [];
-        foreach ($categoriesData as$data) {
-            $category = new Category();$category->setName($data['name']);$category->setSlug($data['slug']);$category->setDescription($faker->paragraph());$category->setIsActive(true);
+        foreach ($categoriesData as $data) {
+            $category = new Category();
+            $category->setName($data['name']);
+            $category->setSlug($data['slug']);
+            $category->setDescription($faker->paragraph());
+            $category->setIsActive(true);
             $manager->persist($category);
-            $categories[] =$category;
+            $categories[] = $category;
         }
 
         // 3. CRÉATION DES PRODUITS SAAS
@@ -58,7 +70,8 @@ class AppFixtures extends Fixture
                 'catIndex' => 0,
                 'priceM' => '99.90',
                 'priceY' => '999.00',
-                'features' => ['monitoring' => '24/7', 'sla' => '2h', 'threat_hunting' => true]
+                'features' => ['monitoring' => '24/7', 'sla' => '2h', 'threat_hunting' => true],
+                'imageUrl' => '/src/assets/products/soc-premium.svg'
             ],
             [
                 'name' => 'Cyna EDR Advanced',
@@ -66,7 +79,8 @@ class AppFixtures extends Fixture
                 'catIndex' => 1,
                 'priceM' => '49.90',
                 'priceY' => '499.00',
-                'features' => ['endpoints' => 50, 'anti_ransomware' => true, 'ai_detection' => true]
+                'features' => ['endpoints' => 50, 'anti_ransomware' => true, 'ai_detection' => true],
+                'imageUrl' => '/src/assets/products/edr-pro.svg'
             ],
             [
                 'name' => 'Cyna XDR Ultimate',
@@ -74,12 +88,14 @@ class AppFixtures extends Fixture
                 'catIndex' => 2,
                 'priceM' => '149.90',
                 'priceY' => '1499.00',
-                'features' => ['cloud_integration' => true, 'automated_response' => true]
+                'features' => ['cloud_integration' => true, 'automated_response' => true],
+                'imageUrl' => '/src/assets/products/xdr-ultimate.svg'
             ]
         ];
 
         $priority = 1;
-        foreach ($productsData as $data) {$product = new Product();
+        foreach ($productsData as $data) {
+            $product = new Product();
             $product->setName($data['name']);
             $product->setSlug($data['slug']);
             $product->setCategory($categories[$data['catIndex']]);
@@ -88,7 +104,14 @@ class AppFixtures extends Fixture
             $product->setPriceMonthly($data['priceM']);
             $product->setPriceYearly($data['priceY']);
             $product->setFeatures($data['features']);
-            $product->setDisplayPriority($priority++);$product->setIsActive(true);
+            $product->setDisplayPriority($priority++);
+            $product->setIsActive(true);
+            
+            // Ajout de l'image pour le produit
+            if (method_exists($product, 'setImageUrl')) {
+                $product->setImageUrl($data['imageUrl']);
+            }
+            
             $manager->persist($product);
         }
 
@@ -97,19 +120,19 @@ class AppFixtures extends Fixture
             [
                 'title' => 'Protégez votre entreprise 24/7',
                 'subtitle' => 'SOC managé par nos experts cybersécurité',
-                'imageUrl' => '/assets/carousel/soc.jpg',
+                'imageUrl' => '/src/assets/hero.png', 
                 'linkUrl' => '/catalog?cat=soc',
             ],
             [
                 'title' => 'Vos terminaux sous haute protection',
                 'subtitle' => 'EDR nouvelle génération avec détection par IA',
-                'imageUrl' => '/assets/carousel/edr.jpg',
+                'imageUrl' => '/src/assets/products/edr-starter.svg',
                 'linkUrl' => '/catalog?cat=edr',
             ],
             [
                 'title' => 'Une visibilité totale sur vos menaces',
                 'subtitle' => 'XDR : corrélation cloud, réseau et endpoints',
-                'imageUrl' => '/assets/carousel/xdr.jpg',
+                'imageUrl' => '/src/assets/products/xdr-essential.svg',
                 'linkUrl' => '/catalog?cat=xdr',
             ],
         ];
