@@ -26,6 +26,16 @@ services:
     networks:
       - cyna_network
 
+  mailpit:
+    image: axllent/mailpit
+    container_name: cyna-mailpit
+    restart: always
+    ports:
+      - "1025:1025" # port SMTP
+      - "8025:8025" # interface web
+    networks:
+      - cyna_network
+
 volumes:
   db_data:
 
