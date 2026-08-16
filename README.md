@@ -80,8 +80,8 @@ Ouvrez ensuite votre nouveau fichier `.env.local` et modifiez/ajoutez les variab
 Suivez ces étapes pour initialiser le projet en local :
 
     Cloner le répertoire :
-    git clone <url-du-depot>
-    cd cyna-backend
+    git clone https://github.com/projet-fil-rouge-h3/backend
+    cd backend
 
     Installer les dépendances PHP :
     composer install
